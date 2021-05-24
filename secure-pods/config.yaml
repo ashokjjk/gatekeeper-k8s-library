@@ -1,0 +1,11 @@
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: Config
+metadata:
+  name: config
+  namespace: "gatekeeper-system"
+spec:
+  match:
+    - excludedNamespaces: ["kube-system", "gatekeeper-system"]
+      processes: ["*"]
+    - excludedNamespaces: ["testing"]                       # Any excluded namespace can be added so gatekeeper will not enforce any policy to it
+      processes: ["audit", "webhook", "sync"]

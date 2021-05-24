@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  labels:
+    type: testing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: violated-pod
+  name: violated-pod
+  namespace: test
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: violated-pod
+  template:
+    metadata:
+      labels:
+        app: violated-pod
+    spec:
+      hostPID: true
+      hostIPC: true
+      containers:
+      - image: public.ecr.aws/b9k6f8f9/nginx:latest
+        name: nginx
+        ports:
+        - containerPort: 80        
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "0.5Mi"
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80

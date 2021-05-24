@@ -1,0 +1,22 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: SecurePodsGatekeeper
+metadata:
+  name: secured-pods-monitored-by-gatekeeper
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    # namespaces:             # If disabled all namespaces will be monitored by gatekeeper and exclusions can be added to config.yaml
+    #   - "default"
+    #   - "mynamespace"
+    #   - "test"
+  parameters:
+    repos: ["gcr.io/"]
+    paths: ["/tmp", "/etc", "/usr"]
+    policy: ["Always"]
+    probes: ["readinessProbe", "livenessProbe"]
+    probeTypes: ["tcpSocket", "httpGet", "exec"]
+    tags: ["v1.0"]
+    cpu: "400m"
+    memory: "1Gi"

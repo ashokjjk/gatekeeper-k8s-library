@@ -1,0 +1,32 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8spullpolicy
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPullPolicy
+      validation:
+        # Schema for the `parameters` field
+        openAPIV3Schema:
+          properties:
+            policy:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spullpolicy
+          violation[{"msg": msg, "details": {}}] {
+          input.review.object.kind = "Pod"
+          allowedPolicy := input.parameters.policy
+          actualPolicy := input.review.object.spec.containers[_].imagePullPolicy
+          not contains(allowedPolicy,actualPolicy)
+          msg = sprintf("Forbidden imagePullPolicy value \"%v\"",[actualPolicy])
+        }
+
+         contains(allowedPolicy,actualPolicy) {                                 #Returns true if the imagepullpolicy is in the allowed policy
+         actualPolicy == allowedPolicy[_]
+        }

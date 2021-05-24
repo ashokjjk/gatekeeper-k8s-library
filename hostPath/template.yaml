@@ -1,0 +1,35 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdenypath
+  annotations:
+    description: Prohibits unauthorized host paths.
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDenyPath
+      validation:
+        # Schema for the `parameters` field
+        openAPIV3Schema:
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdenypath
+
+        violation[{"msg": msg, "details": {}}] {
+        input.review.object.kind == "Pod"                               #Checks if the kind is "Pod"
+        allowedpaths := input.parameters.paths                          #Stores the allowed paths from the parameter in a variable
+        hostpath := input.review.object.spec.volumes[_].hostPath.path   #Stores the host path from the request in a variable
+        not contains(allowedpaths,hostpath)                             #Returns true if the host path is not one among the allowed paths
+        msg := sprintf("%v not in allowed paths",[hostpath])            #Deny message
+        }
+
+        contains(allowedpaths,hostpath) {                                 #Returns true if the host path is in the allowed paths
+         hostpath == allowedpaths[_]
+        }
